@@ -1,0 +1,107 @@
+spring:
+  application:
+    name: authorization-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=mkt_backup
+    username: postgres
+    password: sih
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  security:
+    oauth2:
+      client:
+        registration:
+          auth0:
+            client-id: eEL5y4XsyR6PJ8TSZmZC5ecmDHXBdKxv
+            client-secret: oqx_ClZn91c0ON3YJEauBl9kgGDhXPRiDs68TNjmnToFi_McOEImbUth_3JlWu
+            scope:
+              - openid
+              - profile
+              - email
+            client-name: Auth0
+            provider: auth0
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          auth0:
+            issuer-uri: https://dev-n3fpjvkgzk6c3zc4.us.auth0.com
+            authorization-uri: https://dev-n3fpjvkgzk6c3zc4.us.auth0.com/authorize
+            token-uri: https://dev-n3fpjvkgzk6c3zc4.us.auth0.com/oauth/token
+            jwk-set-uri: https://dev-n3fpjvkgzk6c3zc4.us.auth0.com/.well-known/jwks.json
+            user-info-uri: https://dev-n3fpjvkgzk6c3zc4.us.auth0.com/userinfo
+            user-name-attribute: sub
+      resourceserver:
+        jwt:
+          issuer-uri: https://dev-n3fpjvkgzk6c3zc4.us.auth0.com
+
+  # Add this line to enable bean overriding
+  main:
+    allow-bean-definition-overriding: true
+# Auth0 Configuration (add this section)
+auth0:
+  domain: dev-n3fpjvkgzk6c3zc4.us.auth0.com
+  clientId: eEL5y4XsyR6PJ8TSZmZC5ecmDHXBdKxv
+  clientSecret: oqx_ClZn91c0ON3YJEauBl9kgGDhXPRiDs68TNjmnToFi_McOEImbUth_3JlWu
+  audience: https://dev-n3fpjvkgzk6c3zc4.us.auth0.com/api/v2/
+
+# JWT Configuration
+jwt:
+  # Replace this with an actual secure key (at least 32 characters)
+  secret: zsUmveHyxZ0b/S9T2v3y5w1tHevdDOQARGLr5d2cpv6td8M65cRHWr19P9q/su2rlb7rFJoJje4KnghW4DhkAg==
+  token-validity-in-seconds: 86400  # 24 hours
+  excluded-paths:
+    - /api/auth/login
+    - /auth/login
+    - /auth/validate
+    - /auth/token
+    - /public
+    - /actuator
+    - /login
+    - /oauth2/authorization
+
+  # Existing cloud gateway and other configurations...
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: lb://authorization-service
+          predicates:
+            - Path=/auth/**
+          filters:
+            - AddRequestHeader=X-Auth-Source, gateway
+            - AddResponseHeader=X-Processed-By, gateway
+        - id: dashboard-service
+          uri: lb://dashboard-service
+          predicates:
+            - Path=/dashboard/**
+          filters:
+            - AddRequestHeader=X-Auth-Source, gateway
+            - AddResponseHeader=X-Processed-By, gateway
+        - id: integration-service
+          uri: lb://integration-service
+          predicates:
+            - Path=/integration/**
+          filters:
+            - AddRequestHeader=X-Auth-Source, gateway
+            - AddResponseHeader=X-Processed-By, gateway
+  discovery:
+    locator:
+      enabled: true
+      lower-case-service-id: true
+
+# Logging configuration
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.marketplacem.security: DEBUG
+
+server:
+  port: 8090
