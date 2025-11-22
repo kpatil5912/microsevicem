@@ -3,10 +3,12 @@ package com.marketplacem;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 @SpringBootApplication(exclude = {
 		OAuth2ClientAutoConfiguration.class
 })
+@EnableDiscoveryClient
 public class AuthorizationServiceApplication {
 
 	public static void main(String[] args) {
