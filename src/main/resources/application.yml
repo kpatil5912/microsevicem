@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=mkt_backup
+    username: postgres
+    password: sih
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+  jackson:
+    serialization:
+      INDENT_OUTPUT: true
+
+server:
+  port: 8080
+
+jwt:
+  secret: zsUmveHyxZ0b/S9T2v3y5w1tHevdDOQARGLr5d2cpv6td8M65cRHWr19P9q/su2rlb7rFJoJje4KnghW4DhkAg==
+  include: health,info,metrics,env
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.marketplacem.security: DEBUG
