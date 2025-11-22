@@ -1,26 +1,22 @@
 package com.marketplacem.security;
 
 import io.jsonwebtoken.Claims;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public class JwtRequestFilter extends OncePerRequestFilter {
+public class JwtRequestFilter implements WebFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtRequestFilter.class);
 
@@ -31,15 +27,15 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException {
+    public Mono<Void> filter(ServerWebExchange exchange, org.springframework.web.server.WebFilterChain chain) {
+        String path = exchange.getRequest().getURI().getPath();
+        logger.debug("Processing request: {}", path);
 
-        final String authorizationHeader = request.getHeader("Authorization");
-        logger.debug("Processing request: {}", request.getRequestURI());
+        List<String> authHeader = exchange.getRequest().getHeaders().get("Authorization");
 
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            String jwt = authorizationHeader.substring(7);
-            logger.debug("Found JWT token in request");
+        if (authHeader != null && !authHeader.isEmpty() && authHeader.get(0).startsWith("Bearer ")) {
+            String jwt = authHeader.get(0).substring(7);
+            logger.debug("Found JWT token in request: {}", jwt);
 
             try {
                 if (jwtUtil.isTokenValid(jwt)) {
@@ -67,9 +63,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(username, null, authorities);
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    return chain.filter(exchange)
+                            .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
                 } else {
                     logger.debug("Token validation failed");
                 }
@@ -80,6 +76,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             logger.debug("No Authorization header or not a Bearer token");
         }
 
-        chain.doFilter(request, response);
+        return chain.filter(exchange);
     }
 }

@@ -5,6 +5,7 @@ import io.jsonwebtoken.Claims;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +20,7 @@ public class TokenDebugController {
     }
 
     @PostMapping("/debug/token")
-    public Map<String, Object> debugToken(@RequestBody Map<String, String> request) {
+    public Mono<Map<String, Object>> debugToken(@RequestBody Map<String, String> request) {
         String token = request.get("token");
         Map<String, Object> response = new HashMap<>();
 
@@ -35,6 +36,6 @@ public class TokenDebugController {
             response.put("error", e.getMessage());
         }
 
-        return response;
+        return Mono.just(response);
     }
 }

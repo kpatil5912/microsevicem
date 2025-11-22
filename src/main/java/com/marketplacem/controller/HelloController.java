@@ -2,17 +2,18 @@ package com.marketplacem.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 @RestController
 public class HelloController {
 
     @GetMapping("/")
-    public String home() {
-        return "Gateway Service is up";
+    public Mono<String> home() {
+        return Mono.just("Gateway Service is up");
     }
 
     @GetMapping("/api/hello")
-    public String hello() {
-        return "Hello from gateway-service";
+    public Mono<String> hello() {
+        return Mono.just("Hello from gateway-service");
     }
 }
